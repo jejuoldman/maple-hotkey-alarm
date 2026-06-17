@@ -1,0 +1,221 @@
+:root {
+  color: #17202a;
+  background: #f4f6f9;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f9;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #cbd5df;
+  background: #ffffff;
+  color: #17202a;
+  border-radius: 6px;
+  cursor: pointer;
+  min-height: 38px;
+}
+
+button:hover {
+  border-color: #748aa1;
+}
+
+input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #ffffff;
+  color: #17202a;
+}
+
+.app {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.topbar h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 760;
+  letter-spacing: 0;
+}
+
+.topbar p {
+  margin: 0;
+  color: #607080;
+}
+
+.text-button {
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(220px, 1.2fr) 76px 76px minmax(150px, 1fr) 82px;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border: 1px solid #dde4eb;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  color: #607080;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.preset-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.preset.active {
+  border-color: #2f80ed;
+  background: #eef5ff;
+  color: #145eb8;
+}
+
+.hotkey-button {
+  width: 100%;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotkey-button.capturing {
+  border-color: #2f80ed;
+  background: #eef5ff;
+}
+
+.primary {
+  border-color: #243447;
+  background: #243447;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.slot-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.slot {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(140px, 1fr) 94px 108px 100px 44px;
+  gap: 12px;
+  align-items: center;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid #dde4eb;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.slot-name {
+  font-weight: 760;
+}
+
+.slot-sub,
+.register-status {
+  color: #607080;
+  font-size: 12px;
+}
+
+.remaining {
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.state-pill {
+  justify-self: start;
+  min-width: 76px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 760;
+  background: #edf1f5;
+  color: #425466;
+}
+
+.state-running {
+  background: #e8f6ee;
+  color: #1f7a45;
+}
+
+.state-expired {
+  background: #fff2df;
+  color: #985b00;
+}
+
+.delete {
+  width: 38px;
+  min-height: 38px;
+  color: #b42318;
+}
+
+.empty {
+  display: grid;
+  gap: 6px;
+  padding: 28px;
+  border: 1px dashed #cbd5df;
+  border-radius: 8px;
+  color: #607080;
+  text-align: center;
+  background: #ffffff;
+}
+
+.empty strong {
+  color: #17202a;
+}
+
+@media (max-width: 860px) {
+  .panel,
+  .slot {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .text-button {
+    width: 100%;
+  }
+}

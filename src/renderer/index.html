@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maple Hotkey Alarm</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Maple Hotkey Alarm</h1>
+        <p>메이플이 포커스되어 있어도 전역 조합키로 타이머를 갱신합니다.</p>
+      </div>
+      <button id="pause-all" class="icon-button text-button" type="button" title="모든 타이머 정지">일시정지</button>
+    </header>
+
+    <section id="slot-form" class="panel">
+      <div class="field wide">
+        <label for="slot-name">알림 이름</label>
+        <input id="slot-name" value="재획 알림" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>시간 프리셋</label>
+        <div class="preset-row">
+          <button class="preset active" data-seconds="120" type="button">2분</button>
+          <button class="preset" data-seconds="300" type="button">5분</button>
+          <button class="preset" data-seconds="600" type="button">10분</button>
+        </div>
+      </div>
+
+      <div class="field compact">
+        <label for="minutes">분</label>
+        <input id="minutes" type="number" min="0" max="999" value="2">
+      </div>
+
+      <div class="field compact">
+        <label for="seconds">초</label>
+        <input id="seconds" type="number" min="0" max="59" value="0">
+      </div>
+
+      <div class="field hotkey-field">
+        <label>조합키</label>
+        <button id="capture-hotkey" class="hotkey-button" type="button">조합키 입력</button>
+      </div>
+
+      <button id="add-slot" class="primary" type="button">추가</button>
+    </section>
+
+    <section id="slot-list" class="slot-list" aria-live="polite"></section>
+  </main>
+
+  <template id="empty-template">
+    <div class="empty">
+      <strong>등록된 알림이 없습니다.</strong>
+      <span>이름, 시간, 조합키를 정한 뒤 추가하세요.</span>
+    </div>
+  </template>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>
