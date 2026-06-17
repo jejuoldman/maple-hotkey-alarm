@@ -5,6 +5,7 @@ const {
   Menu,
   Notification,
   Tray,
+  globalShortcut,
   ipcMain,
   nativeImage
 } = require('electron');
@@ -18,8 +19,6 @@ let store;
 let slots = [];
 let registrationState = {};
 let isQuitting = false;
-let keyboardListener;
-let keyboardListenerReady = false;
 const persistentAlarms = new Map();
 
 const hotkeyMatcher = createGlobalHotkeyMatcher((accelerator) => {
@@ -104,26 +103,30 @@ function showMainWindow() {
   broadcastState();
 }
 
-function ensureKeyboardListener() {
-  if (keyboardListener) return keyboardListenerReady;
+function acceleratorParts(accelerator) {
+  return String(accelerator || '').split('+').map((part) => part.trim()).filter(Boolean);
+}
 
-  try {
-    const { GlobalKeyboardListener } = require('node-global-key-listener');
-    keyboardListener = new GlobalKeyboardListener();
-    keyboardListener.addListener((event) => hotkeyMatcher.handleEvent(event));
-    keyboardListenerReady = true;
-  } catch (error) {
-    keyboardListenerReady = false;
-    console.error('Global keyboard listener failed:', error);
-  }
+function isModifier(part) {
+  return ['CommandOrControl', 'Alt', 'Shift', 'Super'].includes(part);
+}
 
-  return keyboardListenerReady;
+function isDirectAccelerator(accelerator) {
+  const parts = acceleratorParts(accelerator);
+  const regularParts = parts.filter((part) => !isModifier(part));
+  return regularParts.length <= 1;
+}
+
+function triggerSyntheticKey(part) {
+  hotkeyMatcher.handleEvent({ name: part, state: 'DOWN' });
+  setTimeout(() => hotkeyMatcher.handleEvent({ name: part, state: 'UP' }), 700);
 }
 
 function registerShortcuts() {
+  globalShortcut.unregisterAll();
   hotkeyMatcher.setSlots(slots);
-  const ready = ensureKeyboardListener();
   const nextRegistration = {};
+  const registeredParts = new Map();
 
   for (const slot of slots) {
     if (!slot.enabled) {
@@ -131,9 +134,24 @@ function registerShortcuts() {
       continue;
     }
 
-    nextRegistration[slot.id] = ready
-      ? { ok: true }
-      : { ok: false, reason: 'keyboard listener unavailable' };
+    if (isDirectAccelerator(slot.accelerator)) {
+      const ok = globalShortcut.register(slot.accelerator, () => manager.triggerHotkey(slot.accelerator));
+      nextRegistration[slot.id] = ok ? { ok: true } : { ok: false, reason: 'registration failed' };
+      continue;
+    }
+
+    let ok = true;
+    for (const part of acceleratorParts(slot.accelerator)) {
+      if (isModifier(part)) continue;
+      if (registeredParts.has(part)) {
+        if (!registeredParts.get(part)) ok = false;
+        continue;
+      }
+      const registered = globalShortcut.register(part, () => triggerSyntheticKey(part));
+      registeredParts.set(part, registered);
+      if (!registered) ok = false;
+    }
+    nextRegistration[slot.id] = ok ? { ok: true } : { ok: false, reason: 'registration failed' };
   }
 
   registrationState = nextRegistration;
@@ -235,7 +253,5 @@ app.on('window-all-closed', (event) => {
 
 app.on('will-quit', () => {
   stopAllPersistentAlarms();
-  if (keyboardListener && typeof keyboardListener.kill === 'function') {
-    keyboardListener.kill();
-  }
+  globalShortcut.unregisterAll();
 });

@@ -12,6 +12,8 @@ test('main process wires global shortcuts, tray, and notifications', () => {
   const main = fs.readFileSync('src/main/main.js', 'utf8');
 
   assert.match(main, /createGlobalHotkeyMatcher/);
+  assert.match(main, /globalShortcut\.register/);
+  assert.match(main, /triggerSyntheticKey/);
   assert.match(main, /new Tray/);
   assert.match(main, /new Notification/);
   assert.match(main, /ipcMain\.handle\('slots:save'/);

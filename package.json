@@ -19,12 +19,9 @@
     "directories": {
       "output": "release"
     },
-    "asarUnpack": "node_modules/node-global-key-listener/bin/WinKeyServer.exe",
     "files": [
       "src/**/*",
-      "package.json",
-      "!node_modules/node-global-key-listener/bin/MacKeyServer",
-      "!node_modules/node-global-key-listener/bin/X11KeyServer"
+      "package.json"
     ],
     "win": {
       "signAndEditExecutable": false,
@@ -37,8 +34,5 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     }
-  },
-  "dependencies": {
-    "node-global-key-listener": "0.3.0"
   }
 }
