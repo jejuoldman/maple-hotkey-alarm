@@ -1,4 +1,5 @@
 .superpowers/
+.tools/
 node_modules/
 .pnpm-store/
 dist/
