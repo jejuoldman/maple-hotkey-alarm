@@ -37,6 +37,18 @@ function createTimerManager({ now = Date.now, emit = () => {} } = {}) {
     return true;
   }
 
+  function acknowledgeAlarm(slotId) {
+    const slot = slots.find((candidate) => candidate.id === slotId);
+    const timer = timers[slotId];
+    if (!slot || !timer || timer.status !== 'expired') return false;
+
+    timer.status = 'idle';
+    timer.remainingSeconds = slot.durationSeconds;
+    timer.endsAt = null;
+    emit({ type: 'alarm-acknowledged', slotId, slot });
+    return true;
+  }
+
   function tick() {
     for (const slot of slots) {
       const timer = timers[slot.id];
@@ -68,7 +80,7 @@ function createTimerManager({ now = Date.now, emit = () => {} } = {}) {
     emit({ type: 'timers-paused' });
   }
 
-  return { setSlots, triggerHotkey, tick, getState, pauseAll };
+  return { setSlots, triggerHotkey, acknowledgeAlarm, tick, getState, pauseAll };
 }
 
 module.exports = { createTimerManager };

@@ -2,6 +2,14 @@
 
 Windows desktop alarm app for MapleStory farming sessions. It keeps running in the tray and listens for global hotkeys while MapleStory is focused.
 
+## Features
+
+- Multiple alarm slots
+- Single keys, modifier hotkeys, and ordinary key chords such as `Insert + 1`
+- Pressing the same registered key resets that slot's timer
+- Expired alarms keep ringing until you press the slot's stop button
+- Tray background mode
+
 ## Download
 
 Use the files generated in `release/`:

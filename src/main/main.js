@@ -5,11 +5,11 @@ const {
   Menu,
   Notification,
   Tray,
-  globalShortcut,
   ipcMain,
   nativeImage
 } = require('electron');
 const { createStore } = require('./store');
+const { createGlobalHotkeyMatcher } = require('./global-hotkeys');
 const { createTimerManager } = require('./timers');
 
 let mainWindow;
@@ -18,12 +18,24 @@ let store;
 let slots = [];
 let registrationState = {};
 let isQuitting = false;
+let keyboardListener;
+let keyboardListenerReady = false;
+const persistentAlarms = new Map();
+
+const hotkeyMatcher = createGlobalHotkeyMatcher((accelerator) => {
+  manager.triggerHotkey(accelerator);
+});
 
 const manager = createTimerManager({
   emit: (event) => {
     if (event.type === 'timer-expired') {
-      notifyExpired(event.slot);
-      playAlarm();
+      startPersistentAlarm(event.slot);
+    }
+    if (event.type === 'timer-started') {
+      stopPersistentAlarm(event.slotId);
+    }
+    if (event.type === 'timers-paused') {
+      stopAllPersistentAlarms();
     }
     broadcastState();
   }
@@ -92,8 +104,25 @@ function showMainWindow() {
   broadcastState();
 }
 
+function ensureKeyboardListener() {
+  if (keyboardListener) return keyboardListenerReady;
+
+  try {
+    const { GlobalKeyboardListener } = require('node-global-key-listener');
+    keyboardListener = new GlobalKeyboardListener();
+    keyboardListener.addListener((event) => hotkeyMatcher.handleEvent(event));
+    keyboardListenerReady = true;
+  } catch (error) {
+    keyboardListenerReady = false;
+    console.error('Global keyboard listener failed:', error);
+  }
+
+  return keyboardListenerReady;
+}
+
 function registerShortcuts() {
-  globalShortcut.unregisterAll();
+  hotkeyMatcher.setSlots(slots);
+  const ready = ensureKeyboardListener();
   const nextRegistration = {};
 
   for (const slot of slots) {
@@ -102,10 +131,9 @@ function registerShortcuts() {
       continue;
     }
 
-    const ok = globalShortcut.register(slot.accelerator, () => {
-      manager.triggerHotkey(slot.accelerator);
-    });
-    nextRegistration[slot.id] = ok ? { ok: true } : { ok: false, reason: 'registration failed' };
+    nextRegistration[slot.id] = ready
+      ? { ok: true }
+      : { ok: false, reason: 'keyboard listener unavailable' };
   }
 
   registrationState = nextRegistration;
@@ -129,6 +157,30 @@ function notifyExpired(slot) {
   }).show();
 }
 
+function startPersistentAlarm(slot) {
+  stopPersistentAlarm(slot.id);
+  notifyExpired(slot);
+  playAlarm();
+  const timer = setInterval(() => {
+    notifyExpired(slot);
+    playAlarm();
+  }, 3000);
+  persistentAlarms.set(slot.id, timer);
+}
+
+function stopPersistentAlarm(slotId) {
+  const timer = persistentAlarms.get(slotId);
+  if (!timer) return;
+  clearInterval(timer);
+  persistentAlarms.delete(slotId);
+}
+
+function stopAllPersistentAlarms() {
+  for (const slotId of Array.from(persistentAlarms.keys())) {
+    stopPersistentAlarm(slotId);
+  }
+}
+
 function playAlarm() {
   const soundWindow = new BrowserWindow({
     show: false,
@@ -143,6 +195,10 @@ function playAlarm() {
 ipcMain.handle('state:get', () => state());
 
 ipcMain.handle('slots:save', (_event, nextSlots) => {
+  const nextIds = new Set(nextSlots.map((slot) => slot.id).filter(Boolean));
+  for (const slotId of Array.from(persistentAlarms.keys())) {
+    if (!nextIds.has(slotId)) stopPersistentAlarm(slotId);
+  }
   slots = store.saveSlots(nextSlots);
   manager.setSlots(slots);
   registerShortcuts();
@@ -152,6 +208,12 @@ ipcMain.handle('slots:save', (_event, nextSlots) => {
 
 ipcMain.handle('timers:pause-all', () => {
   manager.pauseAll();
+  return state();
+});
+
+ipcMain.handle('timers:acknowledge', (_event, slotId) => {
+  stopPersistentAlarm(slotId);
+  manager.acknowledgeAlarm(slotId);
   return state();
 });
 
@@ -172,5 +234,8 @@ app.on('window-all-closed', (event) => {
 });
 
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
+  stopAllPersistentAlarms();
+  if (keyboardListener && typeof keyboardListener.kill === 'function') {
+    keyboardListener.kill();
+  }
 });

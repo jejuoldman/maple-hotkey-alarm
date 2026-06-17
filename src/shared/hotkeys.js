@@ -50,10 +50,10 @@ function normalizeAccelerator(keys) {
   const nonModifiers = normalized.filter((key) => !DISPLAY_MODIFIER_MAP.has(key));
 
   if (nonModifiers.length === 0) {
-    throw new Error('Hotkey must include a non-modifier key.');
+    throw new Error('Hotkey must include a regular key.');
   }
 
-  return [...modifiers, nonModifiers[0]].join('+');
+  return [...modifiers, ...nonModifiers].join('+');
 }
 
 function describeAccelerator(accelerator) {

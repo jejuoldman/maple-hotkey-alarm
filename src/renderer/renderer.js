@@ -21,6 +21,8 @@ let capturedAccelerator = '';
 let capturedDisplay = '';
 let captureAbort = null;
 let editingSlotId = '';
+let capturePressed = [];
+let captureTimer = null;
 
 function normalizeKey(key) {
   if (key === ' ') return 'Space';
@@ -49,7 +51,7 @@ function eventToAccelerator(event) {
 
   return ['CommandOrControl', 'Alt', 'Shift', 'Super']
     .filter((key) => keys.includes(key))
-    .concat(nonModifiers[0])
+    .concat(nonModifiers)
     .join('+');
 }
 
@@ -108,6 +110,7 @@ function render() {
       <div class="remaining"></div>
       <div class="state-pill"></div>
       <div class="register-status"></div>
+      <button class="acknowledge" type="button">끄기</button>
       <button class="edit" type="button" title="수정">E</button>
       <button class="delete" type="button" title="삭제">X</button>
     `;
@@ -120,6 +123,9 @@ function render() {
     pill.textContent = stateLabel(timer.status);
     pill.classList.add(`state-${timer.status}`);
     row.querySelector('.register-status').textContent = registration?.ok ? '등록됨' : `등록 실패${registration?.reason ? `: ${registration.reason}` : ''}`;
+    const acknowledge = row.querySelector('.acknowledge');
+    acknowledge.hidden = timer.status !== 'expired';
+    acknowledge.addEventListener('click', () => acknowledgeAlarm(slot.id));
     row.querySelector('.edit').addEventListener('click', () => editSlot(slot));
     row.querySelector('.delete').addEventListener('click', () => deleteSlot(slot.id));
     elements.list.append(row);
@@ -190,20 +196,52 @@ async function deleteSlot(id) {
   }
 }
 
+async function acknowledgeAlarm(id) {
+  appState = await window.mapleAlarm.acknowledgeAlarm(id);
+  render();
+}
+
+function captureKeysToAccelerator(keys) {
+  const normalized = [];
+  for (const key of keys) {
+    const value = normalizeKey(key);
+    const mapped = modifierMap.get(key) || value;
+    if (!normalized.includes(mapped)) normalized.push(mapped);
+  }
+
+  const modifiers = ['CommandOrControl', 'Alt', 'Shift', 'Super'].filter((key) => normalized.includes(key));
+  const regular = normalized.filter((key) => !modifiers.includes(key));
+  if (!regular.length) {
+    throw new Error('regular key required');
+  }
+  return [...modifiers, ...regular].join('+');
+}
+
+function finishCaptureSoon() {
+  clearTimeout(captureTimer);
+  captureTimer = setTimeout(() => {
+    if (captureAbort) captureAbort.abort();
+    elements.capture.classList.remove('capturing');
+  }, 700);
+}
+
 function startCapture() {
   if (captureAbort) captureAbort.abort();
   captureAbort = new AbortController();
+  capturePressed = [];
   elements.capture.classList.add('capturing');
   elements.capture.textContent = '누르는 중...';
 
   window.addEventListener('keydown', (event) => {
     event.preventDefault();
+    if (!capturePressed.includes(event.key)) {
+      capturePressed.push(event.key);
+    }
     try {
-      capturedAccelerator = eventToAccelerator(event);
+      capturedAccelerator = captureKeysToAccelerator(capturePressed);
       capturedDisplay = describeAccelerator(capturedAccelerator);
       elements.capture.textContent = capturedDisplay;
-      elements.capture.classList.remove('capturing');
-      captureAbort.abort();
+      finishCaptureSoon();
     } catch {
       elements.capture.textContent = '조합키 입력 중...';
     }

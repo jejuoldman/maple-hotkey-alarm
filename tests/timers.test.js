@@ -49,3 +49,18 @@ test('pause all returns running timers to idle', () => {
 
   assert.equal(manager.getState().timers.a.status, 'idle');
 });
+
+test('acknowledges an expired alarm and returns it to idle', () => {
+  let now = 1000;
+  const events = [];
+  const manager = createTimerManager({ now: () => now, emit: (event) => events.push(event) });
+  manager.setSlots([{ id: 'a', name: '재획', accelerator: 'Alt+A', durationSeconds: 1, enabled: true }]);
+  manager.triggerHotkey('Alt+A');
+  now = 2500;
+  manager.tick();
+
+  manager.acknowledgeAlarm('a');
+
+  assert.equal(manager.getState().timers.a.status, 'idle');
+  assert.equal(events.at(-1).type, 'alarm-acknowledged');
+});

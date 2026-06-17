@@ -11,10 +11,11 @@ test('Electron entry files exist', () => {
 test('main process wires global shortcuts, tray, and notifications', () => {
   const main = fs.readFileSync('src/main/main.js', 'utf8');
 
-  assert.match(main, /globalShortcut\.register/);
+  assert.match(main, /createGlobalHotkeyMatcher/);
   assert.match(main, /new Tray/);
   assert.match(main, /new Notification/);
   assert.match(main, /ipcMain\.handle\('slots:save'/);
+  assert.match(main, /ipcMain\.handle\('timers:acknowledge'/);
 });
 
 test('preload exposes only the renderer API', () => {
@@ -22,5 +23,6 @@ test('preload exposes only the renderer API', () => {
 
   assert.match(preload, /contextBridge\.exposeInMainWorld\('mapleAlarm'/);
   assert.match(preload, /ipcRenderer\.invoke\('state:get'/);
+  assert.match(preload, /ipcRenderer\.invoke\('timers:acknowledge'/);
   assert.doesNotMatch(preload, /nodeIntegration/);
 });
