@@ -20,6 +20,7 @@ let appState = { slots: [], timers: {}, registration: {} };
 let capturedAccelerator = '';
 let capturedDisplay = '';
 let captureAbort = null;
+let editingSlotId = '';
 
 function normalizeKey(key) {
   if (key === ' ') return 'Space';
@@ -107,6 +108,7 @@ function render() {
       <div class="remaining"></div>
       <div class="state-pill"></div>
       <div class="register-status"></div>
+      <button class="edit" type="button" title="수정">E</button>
       <button class="delete" type="button" title="삭제">X</button>
     `;
 
@@ -118,6 +120,7 @@ function render() {
     pill.textContent = stateLabel(timer.status);
     pill.classList.add(`state-${timer.status}`);
     row.querySelector('.register-status').textContent = registration?.ok ? '등록됨' : `등록 실패${registration?.reason ? `: ${registration.reason}` : ''}`;
+    row.querySelector('.edit').addEventListener('click', () => editSlot(slot));
     row.querySelector('.delete').addEventListener('click', () => deleteSlot(slot.id));
     elements.list.append(row);
   }
@@ -146,6 +149,7 @@ async function addSlot() {
   }
 
   const nextSlot = {
+    id: editingSlotId || undefined,
     name: elements.name.value.trim() || '알림',
     accelerator: capturedAccelerator,
     durationSeconds,
@@ -153,17 +157,37 @@ async function addSlot() {
   };
 
   try {
-    await saveSlots([...appState.slots, nextSlot]);
+    const nextSlots = editingSlotId
+      ? appState.slots.map((slot) => (slot.id === editingSlotId ? nextSlot : slot))
+      : [...appState.slots, nextSlot];
+    await saveSlots(nextSlots);
+    editingSlotId = '';
     capturedAccelerator = '';
     capturedDisplay = '';
     elements.capture.textContent = '조합키 입력';
+    elements.add.textContent = '추가';
   } catch (error) {
     elements.capture.textContent = error.message || '저장 실패';
   }
 }
 
+function editSlot(slot) {
+  editingSlotId = slot.id;
+  elements.name.value = slot.name;
+  setDuration(slot.durationSeconds);
+  capturedAccelerator = slot.accelerator;
+  capturedDisplay = describeAccelerator(slot.accelerator);
+  elements.capture.textContent = capturedDisplay;
+  elements.add.textContent = '저장';
+  elements.name.focus();
+}
+
 async function deleteSlot(id) {
   await saveSlots(appState.slots.filter((slot) => slot.id !== id));
+  if (editingSlotId === id) {
+    editingSlotId = '';
+    elements.add.textContent = '추가';
+  }
 }
 
 function startCapture() {

@@ -17,4 +17,5 @@ test('renderer script uses preload API for state and saves', () => {
   assert.match(js, /window\.mapleAlarm\.getState/);
   assert.match(js, /window\.mapleAlarm\.saveSlots/);
   assert.match(js, /window\.mapleAlarm\.onState/);
+  assert.match(js, /function editSlot/);
 });

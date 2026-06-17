@@ -10,4 +10,5 @@ test('package defines Electron app scripts and Windows build outputs', () => {
   assert.equal(pkg.scripts.test, 'node --test tests/*.test.js');
   assert.equal(pkg.scripts.dist, 'electron-builder --win nsis portable');
   assert.deepEqual(pkg.build.win.target, ['nsis', 'portable']);
+  assert.equal(pkg.build.win.signAndEditExecutable, false);
 });

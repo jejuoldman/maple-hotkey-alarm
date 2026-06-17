@@ -135,7 +135,7 @@ input {
 
 .slot {
   display: grid;
-  grid-template-columns: minmax(130px, 1fr) minmax(140px, 1fr) 94px 108px 100px 44px;
+  grid-template-columns: minmax(130px, 1fr) minmax(140px, 1fr) 94px 108px 100px 44px 44px;
   gap: 12px;
   align-items: center;
   min-height: 72px;
@@ -183,9 +183,17 @@ input {
   color: #985b00;
 }
 
+.edit,
 .delete {
   width: 38px;
   min-height: 38px;
+}
+
+.edit {
+  color: #145eb8;
+}
+
+.delete {
   color: #b42318;
 }
 
