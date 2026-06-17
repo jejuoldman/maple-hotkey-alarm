@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Alarm</title>
+</head>
+<body>
+  <script>
+    const audio = new AudioContext();
+
+    function tone(start, frequency, duration) {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.frequency.value = frequency;
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      gain.gain.setValueAtTime(0.0001, audio.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.28, audio.currentTime + start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + start + duration);
+      oscillator.start(audio.currentTime + start);
+      oscillator.stop(audio.currentTime + start + duration);
+    }
+
+    tone(0, 880, 0.22);
+    tone(0.3, 660, 0.22);
+    tone(0.6, 880, 0.36);
+    setTimeout(() => window.close(), 1400);
+  </script>
+</body>
+</html>
